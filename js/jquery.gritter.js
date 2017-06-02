@@ -6,7 +6,8 @@
  * Dual licensed under the MIT and GPL licenses.
  *
  * Date: February 24, 2012
- * Version: 1.7.4
+ * Version: 1.7.5-dev
+ * edit by @mvedie : Allow multiple stack
  */
 
 (function($){
@@ -20,7 +21,7 @@
 	* Set up global options that the user can over-ride
 	*/
 	$.gritter.options = {
-		position: '',
+		position: 'top-right',
 		class_name: '', // could be set to 'gritter-light' to use white notifications
 		fade_in_speed: 'medium', // how fast notifications fade in
 		fade_out_speed: 1000, // how fast the notices fade out
@@ -69,7 +70,7 @@
 	var Gritter = {
 		
 		// Public - options to over-ride with $.gritter.options in "add"
-		position: '',
+		position: 'top-right',
 		fade_in_speed: '',
 		fade_out_speed: '',
 		time: '',
@@ -78,9 +79,9 @@
 		_custom_timer: 0,
 		_item_count: 0,
 		_is_setup: 0,
-		_tpl_close: '<a class="gritter-close" href="#" tabindex="1">Close Notification</a>',
+		_tpl_close: '<div class="gritter-close"></div>',
 		_tpl_title: '<span class="gritter-title">[[title]]</span>',
-		_tpl_item: '<div id="gritter-item-[[number]]" class="gritter-item-wrapper [[item_class]]" style="display:none" role="alert"><div class="gritter-top"></div><div class="gritter-item">[[close]][[image]]<div class="[[class_name]]">[[title]]<p>[[text]]</p></div><div style="clear:both"></div></div><div class="gritter-bottom"></div></div>',
+		_tpl_item: '<div id="gritter-item-[[number]]" class="gritter-item-wrapper [[item_class]]" style="display:none"><div class="gritter-top"></div><div class="gritter-item">[[close]][[image]]<div class="[[class_name]]">[[title]]<p>[[text]]</p></div><div style="clear:both"></div></div><div class="gritter-bottom"></div></div>',
 		_tpl_wrap: '<div id="gritter-notice-wrapper"></div>',
 		
 		/**
@@ -110,9 +111,10 @@
 				image = params.image || '',
 				sticky = params.sticky || false,
 				item_class = params.class_name || $.gritter.options.class_name,
-				position = $.gritter.options.position,
+				position = params.position || $.gritter.options.position,
 				time_alive = params.time || '';
-
+			this.position = position;
+			
 			this._verifyWrapper();
 			
 			this._item_count++;
@@ -151,8 +153,7 @@
 			if(this['_before_open_' + number]() === false){
 				return false;
 			}
-
-			$('#gritter-notice-wrapper').addClass(position).append(tmp);
+			$('.gritter-notice-wrapper.'+this.position).append(tmp);
 			
 			var item = $('#gritter-item-' + this._item_count);
 			
@@ -182,7 +183,6 @@
 			// Clicking (X) makes the perdy thing close
 			$(item).find('.gritter-close').click(function(){
 				Gritter.removeSpecific(number, {}, null, true);
-				return false;
 			});
 			
 			return number;
@@ -349,8 +349,7 @@
 			// callbacks (if passed)
 			var before_close = ($.isFunction(params.before_close)) ? params.before_close : function(){};
 			var after_close = ($.isFunction(params.after_close)) ? params.after_close : function(){};
-			
-			var wrap = $('#gritter-notice-wrapper');
+			var wrap = $('.gritter-notice-wrapper.'+this.position);
 			before_close(wrap);
 			wrap.fadeOut(function(){
 				$(this).remove();
@@ -407,9 +406,8 @@
 		* @private
 		*/  
 		_verifyWrapper: function(){
-		  
-			if($('#gritter-notice-wrapper').length == 0){
-				$('body').append(this._tpl_wrap);
+			if($('.gritter-notice-wrapper.'+this.position).length == 0){
+				$('body').append($(this._tpl_wrap).addClass('gritter-notice-wrapper '+this.position));
 			}
 		
 		}
